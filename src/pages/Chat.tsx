@@ -16,107 +16,191 @@ type Message = {
   timestamp: string
 }
 
-// Simple keyword-based response system
+// Improved keyword-based response system with better context awareness
 const getMAIyaResponse = (userMessage: string, conversationContext: Message[]): string => {
   const msg = userMessage.toLowerCase()
 
-  // Track what we know about the user
-  const isBuyer = msg.includes('buy') || msg.includes('buying')
-  const isSeller = msg.includes('sell') || msg.includes('selling')
-  const hasLocation = 
+  // Helper functions to check context from entire conversation
+  const checkInConversation = (keyword: string | RegExp): boolean => {
+    return conversationContext.some((m) => {
+      if (typeof keyword === 'string') {
+        return m.sender === 'user' && m.text.toLowerCase().includes(keyword)
+      } else {
+        return m.sender === 'user' && keyword.test(m.text.toLowerCase())
+      }
+    })
+  }
+
+  // Track what we know about the user from CURRENT message
+  const isBuyerMsg = msg.includes('buy') || msg.includes('buying')
+  const isSellerMsg = msg.includes('sell') || msg.includes('selling')
+  const hasLocationMsg =
     msg.includes('lahug') ||
     msg.includes('banilad') ||
     msg.includes('it park') ||
     msg.includes('mandaue') ||
     msg.includes('talisay') ||
-    msg.includes('cebu')
-  const hasBudget = 
+    msg.includes('cebu') ||
+    msg.includes('lapu-lapu')
+  const hasBudgetMsg =
     msg.match(/[₱₽$]\s*\d+/) ||
-    msg.match(/\d+\s*(million|million|m|budget|price)/) ||
-    msg.match(/\d+k/)
-  const hasTimeline = 
+    msg.match(/\d+\s*(million|m)\b/) ||
+    msg.match(/\d+k/) ||
+    (msg.includes('budget') && msg.length > 10)
+  const hasTimelineMsg =
     msg.includes('soon') ||
     msg.includes('asap') ||
     msg.includes('month') ||
     msg.includes('week') ||
     msg.includes('day') ||
-    msg.includes('urgent')
-  const hasRooms = 
-    msg.match(/(\d+)\s*(bedroom|bed|br|bed room)/) ||
+    msg.includes('urgent') ||
+    msg.includes('quickly') ||
+    msg.includes('fast')
+  const hasRoomsMsg =
+    msg.match(/(\d+)\s*(bedroom|bed|br|bdrm)/) ||
     msg.includes('studio') ||
-    msg.includes('1 bed') ||
-    msg.includes('2 bed') ||
-    msg.includes('3 bed')
+    msg.match(/\d+\s*(bed|br)\b/)
 
-  // Count conversation turns to increase readiness
-  const turnCount = conversationContext.filter((m) => m.sender === 'user').length
+  // Track what we know from ENTIRE conversation
+  const isBuyerHistory = checkInConversation('buy') || isBuyerMsg
+  const isSellerHistory = checkInConversation('sell') || isSellerMsg
+  const hasLocationHistory = checkInConversation(/lahug|banilad|it park|mandaue|talisay|cebu|lapu-lapu/) || hasLocationMsg
+  const hasBudgetHistory =
+    checkInConversation(/[₱₽$]\s*\d+/) ||
+    checkInConversation(/\d+\s*(million|m)\b/) ||
+    checkInConversation(/\d+k/) ||
+    hasBudgetMsg
+  const hasTimelineHistory = checkInConversation(/soon|asap|month|week|day|urgent|quickly|fast/) || hasTimelineMsg
+  const hasRoomsHistory =
+    checkInConversation(/(\d+)\s*(bedroom|bed|br|bdrm)/) ||
+    checkInConversation(/studio/) ||
+    hasRoomsMsg
 
-  // Different responses based on context
-  if (isBuyer && !hasBudget) {
+  // Count user messages for context
+  const userMsgCount = conversationContext.filter((m) => m.sender === 'user').length
+
+  // ============================================================================
+  // LOGIC FLOW: Determine next question based on what we DON'T know yet
+  // ============================================================================
+
+  // 1. First, determine intent (Buy/Sell/Exploring)
+  if (!isBuyerHistory && !isSellerHistory) {
+    // They haven't indicated buy or sell yet
+    if (isSellerMsg) {
+      // They just said they're selling - ask for property value
+      return 'Perfect! To get you accurate market insights, what\'s the estimated value of your property? This helps me find comparable listings in your area.'
+    }
+    if (isBuyerMsg) {
+      // They just said they're buying - ask for budget
+      return "That's great! To help narrow down options, what's your budget range? Are you looking to spend around ₱3M-5M, ₱5M-10M, or ₱10M+?"
+    }
+    // Default: ask them to clarify intent
+    return "Got it. To help narrow things down: are you looking to buy, sell, or just exploring the market right now?"
+  }
+
+  // 2. We know intent - now check for budget (if buyer) or property value (if seller)
+  if (isBuyerHistory && !hasBudgetHistory) {
     return "That's great! To help narrow down options, what's your budget range? Are you looking to spend around ₱3M-5M, ₱5M-10M, or ₱10M+?"
   }
 
-  if (isSeller && !hasBudget) {
+  if (isSellerHistory && !hasBudgetHistory) {
     return 'Perfect! To get you accurate market insights, what\'s the estimated value of your property? This helps me find comparable listings in your area.'
   }
 
-  if (hasBudget && !hasLocation) {
-    return 'Excellent budget range! Now, where in Cebu are you most interested in? Popular areas include Lahug, Banilad, IT Park, Mandaue, or Talisay. Where appeals to you?'
+  // 3. We have budget/value - now ask for location
+  if ((isBuyerHistory || isSellerHistory) && hasBudgetHistory && !hasLocationHistory) {
+    return 'Excellent! Now, where in Cebu are you interested? Popular areas include Lahug, Banilad, IT Park, Mandaue, or Talisay. Where appeals to you most?'
   }
 
-  if (hasLocation && !hasRooms) {
-    return 'Great location choice! How many bedrooms and bathrooms are you looking for? Are you thinking 1-2 bedrooms, 3 bedrooms, or something larger?'
+  // 4. We have location - ask for bedrooms/bathrooms (context-aware question)
+  if ((isBuyerHistory || isSellerHistory) && hasBudgetHistory && hasLocationHistory && !hasRoomsHistory) {
+    if (isSellerHistory) {
+      return 'Perfect! To help market your property better, how many bedrooms and bathrooms does your property have? That helps me find the right buyers.'
+    } else {
+      return 'Great location choice! How many bedrooms and bathrooms are you looking for? Are you thinking 1-2 bedrooms, 3 bedrooms, or something larger?'
+    }
   }
 
-  if (hasTimeline) {
-    return "I can see you're in a hurry! That's important info. Based on what you've told me so far, you're looking quite solid. Let me compile some matching properties for you and connect you with an agent who can close quickly."
+  // ============================================================================
+  // We have all core info (intent, budget, location, rooms) - check for timeline
+  // ============================================================================
+
+  // If they mention urgency/timeline, escalate faster
+  if (hasTimelineMsg && isBuyerHistory && hasBudgetHistory && hasLocationHistory) {
+    return '✓ Excellent! I can see you\'re in a hurry—that\'s actually great for closing fast. With your full details, I\'m connecting you with our top closing agent RIGHT NOW. They can show properties TODAY.'
   }
 
-  if (isBuyer && hasBudget && hasLocation && hasRooms) {
-    return '✓ Perfect! I have enough info now. Based on your preferences—your budget, location, and property needs—I found several matching listings. An agent will reach out shortly with curated options. Ready to review?'
+  if (hasTimelineMsg && isSellerHistory && hasBudgetHistory && hasLocationHistory) {
+    return '✓ Perfect timing! Urgent sellers often get better results. I\'m connecting you with our fastest-moving agent in your area who specializes in quick sales. They\'ll call within the hour.'
   }
 
-  if (isSeller && hasBudget && hasLocation) {
-    return '✓ Excellent! I can already see comparable properties in your area. Your property is competitively priced. An agent specializing in your area will contact you soon to discuss a marketing strategy. Sound good?'
+  // ============================================================================
+  // Escalation responses - we have enough info
+  // ============================================================================
+
+  if (isBuyerHistory && hasBudgetHistory && hasLocationHistory && hasRoomsHistory) {
+    return '✓ Perfect! I have all the details I need. Based on your preferences, I found several matching listings. An experienced buyer\'s agent is ready to connect with you now—they can schedule showings today or tomorrow.'
   }
+
+  if (isSellerHistory && hasBudgetHistory && hasLocationHistory && hasRoomsHistory) {
+    return '✓ Excellent! I have all your property details now. I\'m generating a market analysis and will connect you with agents specializing in your area. They can list your property within 24 hours and start showing it immediately.'
+  }
+
+  // ============================================================================
+  // FAQ & Info responses
+  // ============================================================================
 
   if (msg.includes('thank') || msg.includes('thanks') || msg.includes('thx')) {
     return "You're welcome! Feel free to ask me any questions about properties, neighborhoods, or the buying/selling process. I'm here to help! 😊"
   }
 
-  if (msg.includes('how') && (msg.includes('work') || msg.includes('does')))
- {
-    return "Here's how I work: I ask you a few key questions about your needs, budget, and timeline. Based on your answers, I match you with properties and qualified agents. If you're a seller, I generate market insights to help price your property right."
+  if ((msg.includes('how') || msg.includes('what')) && (msg.includes('work') || msg.includes('process'))) {
+    return "Here's how I work: I ask you a few key questions about your needs, budget, location, and timeline. Based on your answers, I match you with properties and qualified agents. For sellers, I generate market analysis to help price your property competitively. Simple and fast!"
   }
 
-  if (msg.includes('agent') || msg.includes('realtor')) {
-    return 'Great question! Once I\'ve qualified your needs, I\'ll connect you with the best agent for your situation. They\'ll have all your info ready and can move fast. Most of our agents can meet within 24 hours.'
+  if (msg.includes('agent') || msg.includes('realtor') || msg.includes('connect')) {
+    return 'Great question! Once I\'ve qualified your needs completely, I\'ll match you with the best agent for your situation. They\'ll have all your info ready and can move fast. Most of our agents can meet within 24 hours or less.'
   }
 
-  if (msg.includes('price') || msg.includes('cost') || msg.includes('afford')) {
-    return 'That depends on the area and property type! In Cebu, you can find: condos from ₱3M, townhouses ₱5-10M, and larger homes ₱10M+. What\'s your ballpark budget?'
+  if (msg.includes('price') || msg.includes('cost') || msg.includes('afford') || msg.includes('expensive')) {
+    return 'Great question! Cebu has diverse options: condos from ₱3M, townhouses ₱5-10M, larger homes ₱8M-15M+. It really depends on the area and condition. What\'s your ballpark budget?'
   }
 
-  if (msg.includes('flood') || msg.includes('typhoon') || msg.includes('risk') || msg.includes('safe')) {
-    return 'Good thinking! Safety and location risks are important. When we show you properties, I include detailed neighborhood risk assessments—flood zones, crime data, infrastructure quality, etc. Want me to focus on specific safety factors?'
+  if (msg.includes('flood') || msg.includes('typhoon') || msg.includes('risk') || msg.includes('safe') || msg.includes('dangerous')) {
+    return 'Smart thinking! Safety and location risks are crucial. When I show you properties, I include detailed neighborhood assessments—flood zones, crime data, infrastructure, accessibility. Any specific safety concerns I should focus on?'
   }
 
-  if (msg.includes('loan') || msg.includes('finance') || msg.includes('mortgage')) {
-    return 'Most of our buyers work with banks or financing partners. We can connect you with agents who have lending relationships. Are you already pre-approved, or are you still exploring financing options?'
+  if (msg.includes('loan') || msg.includes('finance') || msg.includes('mortgage') || msg.includes('approved')) {
+    return 'Most buyers work with banks or financing partners. We can connect you with agents who have lending relationships. Are you already pre-approved, or are you still exploring financing options?'
   }
 
-  // If we have good info, show escalation is ready
-  if (turnCount > 4 && hasBudget && hasLocation) {
-    return "You've given me great info! Your profile is 85%+ ready for agent escalation. Ready for me to connect you with a specialist who can close the deal?"
+  if (msg.includes('compare') || msg.includes('similar') || msg.includes('like')) {
+    return 'Good idea to compare! I can show you comparable properties in the same area and price range. Once I have your full details, our agent will pull up the best matches for side-by-side comparison.'
   }
 
-  // Default responses for various cases
+  if (msg.includes('neighborhood') || msg.includes('area') || msg.includes('location') || msg.includes('community')) {
+    return 'Neighborhood details matter! I can give you info on schools, shopping, restaurants, transportation, safety, and future development. Which area are you most interested in learning more about?'
+  }
+
+  // ============================================================================
+  // Generic responses for various inputs
+  // ============================================================================
+
+  if (userMsgCount > 4 && hasBudgetHistory && hasLocationHistory && !hasRoomsHistory) {
+    return "You've given me great info! Just one more quick detail—how many bedrooms are you looking for? Then I can escalate to an agent immediately."
+  }
+
+  if (userMsgCount > 5 && !hasTimelineHistory) {
+    return "Quick question—what\'s your ideal timeline? Are you looking to move soon, or are you flexible? This helps me prioritize the right properties."
+  }
+
+  // Default fallback responses
   const defaultResponses = [
     "I hear you! Tell me more about what you're looking for. What's your budget and preferred location?",
-    "That's valuable context. To find the perfect match, what's most important to you—location, price, property type, or timeline?",
-    "Got it. To help narrow things down: are you looking to buy, sell, or just exploring the market right now?",
+    "That's valuable context! To find the perfect match, what\'s most important to you—location, price, property type, or timeline?",
+    "Got it. So you\'re interested in that area. What\'s your budget range and how many bedrooms are you thinking?",
     "Understood! Let me ask—what would be your ideal move-in or close date? That helps me find properties that fit your timeline.",
-    "I'm here to help! What's the #1 priority for you right now—finding your dream home, getting top dollar for your sale, or something else?",
+    "I\'m here to help! Can you tell me a bit more about your ideal property—size, location, and budget?",
   ]
 
   return defaultResponses[Math.floor(Math.random() * defaultResponses.length)]
@@ -141,10 +225,42 @@ export default function Chat() {
     }
   }, [messages])
 
-  // Calculate qualification score based on conversation depth
+  // Calculate qualification score based on conversation depth and info collected
   const userMessages = messages.filter((m) => m.sender === 'user').length
-  const baseScore = 20 + userMessages * 15
-  const qualificationScore = Math.min(baseScore, 95)
+
+  const hasIntent = messages.some(
+    (m) =>
+      m.sender === 'user' && (m.text.toLowerCase().includes('buy') || m.text.toLowerCase().includes('sell'))
+  )
+  const hasBudget = messages.some(
+    (m) =>
+      m.sender === 'user' &&
+      (m.text.match(/[₱₽$]\s*\d+/) ||
+        m.text.match(/\d+\s*(million|m)\b/) ||
+        m.text.match(/\d+k/))
+  )
+  const hasLocation = messages.some(
+    (m) =>
+      m.sender === 'user' &&
+      (m.text.toLowerCase().includes('lahug') ||
+        m.text.toLowerCase().includes('banilad') ||
+        m.text.toLowerCase().includes('it park') ||
+        m.text.toLowerCase().includes('mandaue') ||
+        m.text.toLowerCase().includes('talisay') ||
+        m.text.toLowerCase().includes('cebu'))
+  )
+  const hasRooms = messages.some(
+    (m) =>
+      m.sender === 'user' &&
+      (m.text.match(/\d+\s*(bedroom|bed|br|bdrm)/) || m.text.includes('studio'))
+  )
+
+  let qualificationScore = 20
+  if (hasIntent) qualificationScore += 20
+  if (hasBudget) qualificationScore += 20
+  if (hasLocation) qualificationScore += 20
+  if (hasRooms) qualificationScore += 15
+  qualificationScore = Math.min(qualificationScore + Math.floor(userMessages * 2), 95)
 
   const handleSend = () => {
     if (!input.trim()) return
@@ -170,7 +286,7 @@ export default function Chat() {
       }
       setMessages((prev) => [...prev, aiResponse])
       setIsLoading(false)
-    }, 800 + Math.random() * 700) // 800-1500ms for natural feel
+    }, 800 + Math.random() * 700)
   }
 
   return (
@@ -221,9 +337,10 @@ export default function Chat() {
                     </Avatar>
                     <div className={`flex flex-col ${message.sender === 'user' ? 'items-end' : ''}`}>
                       <div
-                        className={`rounded-lg px-4 py-2 max-w-xs ${message.sender === 'user'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-foreground'
+                        className={`rounded-lg px-4 py-2 max-w-xs ${
+                          message.sender === 'user'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-foreground'
                         }`}
                       >
                         <p className="text-sm">{message.text}</p>
@@ -297,7 +414,9 @@ export default function Chat() {
                     ? 'Getting basic info...'
                     : qualificationScore < 70
                       ? 'Building your profile...'
-                      : 'Almost ready for agent connection!'}
+                      : qualificationScore < 90
+                        ? 'Almost ready for agent connection!'
+                        : '✓ Ready to escalate to agent!'}
                 </p>
               </div>
 
@@ -305,14 +424,22 @@ export default function Chat() {
                 <div className="text-sm">
                   <p className="text-muted-foreground text-xs mb-1">Intent</p>
                   <p className="font-semibold text-foreground">
-                    {messages.some((m) => m.text.toLowerCase().includes('buy') || m.text.toLowerCase().includes('sell')) ? '✓ Set' : '...'}
+                    {messages.some(
+                      (m) => m.sender === 'user' && (m.text.toLowerCase().includes('buy') || m.text.toLowerCase().includes('sell'))
+                    )
+                      ? '✓ Set'
+                      : '...'}
                   </p>
                 </div>
                 <div className="text-sm">
                   <p className="text-muted-foreground text-xs mb-1">Budget</p>
                   <p className="font-semibold text-foreground">
                     {messages.some(
-                      (m) => m.text.toLowerCase().match(/[₱₽$]\s*\d+/) || m.text.match(/\d+\s*m(illion)?/i)
+                      (m) =>
+                        m.sender === 'user' &&
+                        (m.text.match(/[₱₽$]\s*\d+/) ||
+                          m.text.match(/\d+\s*m(illion)?/i) ||
+                          m.text.match(/\d+k/))
                     )
                       ? '✓ Set'
                       : '...'}
@@ -323,37 +450,35 @@ export default function Chat() {
                   <p className="font-semibold text-foreground">
                     {messages.some(
                       (m) =>
-                        m.text.toLowerCase().includes('lahug') ||
-                        m.text.toLowerCase().includes('banilad') ||
-                        m.text.toLowerCase().includes('it park') ||
-                        m.text.toLowerCase().includes('mandaue') ||
-                        m.text.toLowerCase().includes('talisay') ||
-                        m.text.toLowerCase().includes('cebu')
+                        m.sender === 'user' &&
+                        (m.text.toLowerCase().includes('lahug') ||
+                          m.text.toLowerCase().includes('banilad') ||
+                          m.text.toLowerCase().includes('it park') ||
+                          m.text.toLowerCase().includes('mandaue') ||
+                          m.text.toLowerCase().includes('talisay') ||
+                          m.text.toLowerCase().includes('cebu'))
                     )
                       ? '✓ Preferred'
                       : '...'}
                   </p>
                 </div>
                 <div className="text-sm">
-                  <p className="text-muted-foreground text-xs mb-1">Timeline</p>
+                  <p className="text-muted-foreground text-xs mb-1">Bedrooms</p>
                   <p className="font-semibold text-foreground">
                     {messages.some(
                       (m) =>
-                        m.text.toLowerCase().includes('soon') ||
-                        m.text.toLowerCase().includes('asap') ||
-                        m.text.toLowerCase().includes('month') ||
-                        m.text.toLowerCase().includes('week') ||
-                        m.text.toLowerCase().includes('day') ||
-                        m.text.toLowerCase().includes('urgent')
+                        m.sender === 'user' &&
+                        (m.text.match(/\d+\s*(bedroom|bed|br|bdrm)/) ||
+                          m.text.includes('studio'))
                     )
-                      ? '✓ Clear'
+                      ? '✓ Set'
                       : '...'}
                   </p>
                 </div>
               </div>
 
               {qualificationScore >= 80 && (
-                <Button className="w-full mt-4 bg-gradient-to-r from-primary to-secondary">
+                <Button className="w-full mt-4 bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90">
                   Ready to Connect with Agent
                 </Button>
               )}

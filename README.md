@@ -1,74 +1,101 @@
-# React + TypeScript + Vite
+# 🏠 MAIya: The AI Real Estate Agent (Hackathon Demo)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> **Team Role:** Hipster (Design/UX) 🎨  
+> **To:** Hacker (Dev) 💻 & Hustler (Biz) 💼
 
-Currently, two official plugins are available:
+## 🚀 Project Overview
+**MAIya** is an intelligent, AI-first real estate platform designed to bridge the gap between leads and agents. Unlike traditional listings, MAIya actively qualifies users, analyzes their intent, and serves "Escalation-Ready" leads to agents.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+**Core Value Prop:**
+*   **For Buyers:** Personalized, chat-based discovery & instant answers.
+*   **For Agents:** No more tire-kickers. Only qualified leads with calculated "Readiness Scores."
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 📚 User Manual (The Demo Flow)
 
-## Expanding the ESLint configuration
+Use this flow for the pitch/demo to show the full user journey.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 1. The Hook: Landing Page (`/`)
+*   **Visual:** Clean, modern hero section.
+*   **Action:** Click **"Find Your Dream Home"** to start the journey.
+*   **Pitch:** "We don't just search; we match."
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### 2. The Funnel: Onboarding (`/onboarding`)
+*   **What it is:** A gamified, step-by-step wizard to capture user intent.
+*   **Steps:**
+    1.  **Intent:** Buy vs. Sell.
+    2.  **Budget:** Slider & Financing status.
+    3.  **Location:** Preferred areas (e.g., Lahug, IT Park).
+    4.  **Timeline:** Urgency (ASAP vs. Just Looking).
+    5.  **Preferences:** Bedrooms/Property Type.
+*   **UX Detail:** Smooth animations (Framer Motion) between steps to keep engagement high.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### 3. The Discovery: Listings (`/listings`)
+*   **Features:**
+    *   **Smart Filters:** Filter by Property Type (House/Condo) & Price Range.
+    *   **Visuals:** High-quality cards with "Verified" badges.
+    *   **Interaction:** Click the ❤️ heart to save (simulated state).
+*   **Demo Tip:** Show how the filters instantly update the grid (mock data included for various scenarios).
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 4. The Deep Dive: Property Details (`/property/:id`)
+*   **Key Feature:** **AI Market Analysis (CMA)** card on the right.
+*   **What to show:**
+    *   "Fair Market Value" calculation.
+    *   "Comparable Properties" logic.
+    *   "Area Insights" (e.g., flood risk, crime safety).
+*   **Call to Action:** "Talk to MAIya" button to simulate interest.
+
+### 5. The AI Assistant: Chat (`/chat`)
+*   **Meet MAIya:** A context-aware chatbot.
+*   **Try these prompts:**
+    *   *"I want to buy a condo in IT Park for 5M"* -> MAIya detects intent, location, and budget.
+    *   *"I need to move asap"* -> MAIya updates timeline readiness.
+*   **Magic Moment:** Watch the **"Qualification Progress"** bar on the right update in real-time as you chat.
+*   **Escalation:** When the score hits 80%, a **"Ready to Connect with Agent"** button appears.
+
+### 6. The "Hustler's" View: Agent Dashboard (`/agent`)
+*   **What it is:** The CRM view for the real estate agent.
+*   **Key Data:**
+    *   **Lead Quality:** Shows leads sorted by "Readiness Score."
+    *   **Insights:** "High Budget," "Urgent," "Pre-approved."
+*   **Why it matters:** This proves we save agents time by filtering out unqualified leads.
+
+---
+
+## 🛠️ Technical Setup (For the Hacker)
+
+This project is built with **React + Vite + TypeScript**.
+
+### Prerequisites
+*   Node.js & npm
+
+### Installation
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Running the App
+```bash
+npm run dev
 ```
-# Sinulog-Hackathon
+Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
+
+### Key Libraries
+*   **Styling:** Tailwind CSS + `shadcn/ui` components.
+*   **Animations:** `framer-motion` (used for page transitions and card effects).
+*   **Routing:** `react-router-dom`.
+*   **Icons:** `lucide-react`.
+
+---
+
+## 💼 Pitch Points (For the Hustler)
+
+*   **Problem:** Agents spend 80% of their time on leads that never convert.
+*   **Solution:** MAIya automates the "first meeting" – qualifying budget, timeline, and intent *before* a human ever gets involved.
+*   **Monetization:** SaaS subscription for agents/brokerages or Lead Gen model.
+*   **Unfair Advantage:** Our UI isn't just a form; it's a conversation. The "Readiness Score" is our proprietary metric for lead quality.
+
+---
+
+**✨ Let's win this!**
