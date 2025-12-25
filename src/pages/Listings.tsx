@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { MapPin, Bed, Bath, Square, Heart, Search } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { containerVariants, itemVariants, cardHoverVariants, PREMIUM_EASE } from '@/lib/animations'
 
 const mockListings = [

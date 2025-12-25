@@ -1,11 +1,13 @@
-export const PREMIUM_EASE = [0.16, 1, 0.3, 1]; // "The Premium Feel"
+import { Variants } from "framer-motion";
+
+export const PREMIUM_EASE = [0.16, 1, 0.3, 1] as const; // "The Premium Feel"
 export const DURATION_FAST = 0.2;
 export const DURATION_MEDIUM = 0.4;
 export const DURATION_SLOW = 0.6;
 
 // Staggered container for lists (Listings, Features, CMA data)
 // Psychology: Discovery & processing time. Prevents data overwhelm.
-export const containerVariants = {
+export const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -18,7 +20,7 @@ export const containerVariants = {
 
 // Item reveal (Cards, List items)
 // Psychology: "Rising up" implies value and solidity.
-export const itemVariants = {
+export const itemVariants: Variants = {
   hidden: { y: 20, opacity: 0 },
   visible: {
     y: 0,
@@ -33,7 +35,7 @@ export const itemVariants = {
 
 // Property Card Hover
 // Psychology: Tactile feedback. "Lifting" the object to examine it closer.
-export const cardHoverVariants = {
+export const cardHoverVariants: Variants = {
   hover: {
     y: -5,
     boxShadow: "0 10px 30px -10px rgba(0,0,0,0.15)", // Premium soft shadow
@@ -53,7 +55,7 @@ export const cardHoverVariants = {
 
 // Page Transition
 // Psychology: Smooth continuity between states.
-export const pageVariants = {
+export const pageVariants: Variants = {
   initial: { opacity: 0, y: 10 },
   animate: { 
     opacity: 1, 
@@ -68,7 +70,7 @@ export const pageVariants = {
 
 // Success/Completion
 // Psychology: Celebration and validation of choice.
-export const successScaleVariants = {
+export const successScaleVariants: Variants = {
   hidden: { scale: 0.8, opacity: 0 },
   visible: {
     scale: 1,
