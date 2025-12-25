@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -7,9 +7,25 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
 import { Progress } from '@/components/ui/progress'
-import { CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react'
+import { CheckCircle } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { PREMIUM_EASE, successScaleVariants } from '@/lib/animations'
 
 type OnboardingStep = 'intent' | 'budget' | 'location' | 'timeline' | 'preferences' | 'complete'
+
+const stepVariants = {
+  initial: { opacity: 0, x: 20 },
+  animate: { 
+    opacity: 1, 
+    x: 0,
+    transition: { duration: 0.4, ease: PREMIUM_EASE }
+  },
+  exit: { 
+    opacity: 0, 
+    x: -20,
+    transition: { duration: 0.3, ease: PREMIUM_EASE }
+  }
+}
 
 export default function Onboarding() {
   const [step, setStep] = useState<OnboardingStep>('intent')
@@ -24,11 +40,11 @@ export default function Onboarding() {
   })
 
   const progress = {
-    intent: 16,
-    budget: 33,
-    location: 50,
-    timeline: 66,
-    preferences: 83,
+    intent: 0,
+    budget: 20,
+    location: 40,
+    timeline: 60,
+    preferences: 80,
     complete: 100,
   }
 
@@ -49,318 +65,279 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Let's Find Your Perfect Property</h1>
-          <p className="text-muted-foreground mb-4">
-            Answer a few questions so MAIya can match you with the right properties and agents
-          </p>
-          <Progress value={progress[step]} className="h-2" />
-          <p className="text-sm text-muted-foreground mt-2">
-            Step {Object.keys(progress).indexOf(step) + 1} of {Object.keys(progress).length}
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-b from-sky-50/50 to-background py-8 dark:from-sky-950/10">
+      <div className="container mx-auto px-4 max-w-2xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2 text-foreground">Let's Find Your Perfect Property</h1>
+        <p className="text-muted-foreground">
+          Answer a few questions so MAIya can help match you with the right properties and agents
+        </p>
+        <Progress value={progress[step]} className="mt-4 transition-all duration-500 ease-out h-2 bg-muted" />
+      </div>
 
-        {/* Step 1: Intent */}
+      <AnimatePresence mode="wait">
         {step === 'intent' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>What brings you here today?</CardTitle>
-              <CardDescription>This helps us understand your needs better</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <RadioGroup
-                value={formData.userType}
-                onValueChange={(value) => setFormData({ ...formData, userType: value })}
-                className="space-y-3"
-              >
-                <Label
-                  htmlFor="buyer"
-                  className={`flex items-start space-x-3 border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                    formData.userType === 'buyer' ? 'border-primary bg-accent' : 'border-border hover:border-primary/50'
-                  }`}
+          <motion.div key="intent" variants={stepVariants} initial="initial" animate="animate" exit="exit">
+            <Card className="border-primary/5 shadow-sm">
+              <CardHeader>
+                <CardTitle>What brings you here today?</CardTitle>
+                <CardDescription>This helps us understand your needs better</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <RadioGroup
+                  value={formData.userType}
+                  onValueChange={(value) => setFormData({ ...formData, userType: value })}
                 >
-                  <RadioGroupItem value="buyer" id="buyer" className="mt-0.5" />
-                  <div className="flex-1">
-                    <div className="font-semibold">I'm looking to buy</div>
-                    <div className="text-sm text-muted-foreground">
-                      Find properties that match your criteria
-                    </div>
-                  </div>
-                </Label>
-                <Label
-                  htmlFor="seller"
-                  className={`flex items-start space-x-3 border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                    formData.userType === 'seller' ? 'border-primary bg-accent' : 'border-border hover:border-primary/50'
-                  }`}
-                >
-                  <RadioGroupItem value="seller" id="seller" className="mt-0.5" />
-                  <div className="flex-1">
-                    <div className="font-semibold">I'm looking to sell</div>
-                    <div className="text-sm text-muted-foreground">
-                      Get market analysis and connect with buyers
-                    </div>
-                  </div>
-                </Label>
-              </RadioGroup>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="ghost" disabled>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-              <Button onClick={handleNext} disabled={!formData.userType}>
-                Continue
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </CardFooter>
-          </Card>
+                  <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className={`flex items-center space-x-2 border rounded-lg p-4 cursor-pointer transition-colors ${formData.userType === 'buyer' ? 'border-primary bg-primary/5' : 'hover:bg-accent'}`}>
+                    <RadioGroupItem value="buyer" id="buyer" />
+                    <Label htmlFor="buyer" className="flex-1 cursor-pointer">
+                      <div className="font-semibold">I'm looking to buy</div>
+                      <div className="text-sm text-muted-foreground">
+                        Find properties that match your criteria
+                      </div>
+                    </Label>
+                  </motion.div>
+                  <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className={`flex items-center space-x-2 border rounded-lg p-4 cursor-pointer transition-colors ${formData.userType === 'seller' ? 'border-primary bg-primary/5' : 'hover:bg-accent'}`}>
+                    <RadioGroupItem value="seller" id="seller" />
+                    <Label htmlFor="seller" className="flex-1 cursor-pointer">
+                      <div className="font-semibold">I'm looking to sell</div>
+                      <div className="text-sm text-muted-foreground">
+                        Get market analysis and connect with buyers
+                      </div>
+                    </Label>
+                  </motion.div>
+                </RadioGroup>
+                <div className="flex justify-end">
+                  <Button onClick={handleNext} disabled={!formData.userType}>
+                    Continue
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         )}
 
-        {/* Step 2: Budget */}
         {step === 'budget' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>What's your budget range?</CardTitle>
-              <CardDescription>This helps us show properties within your price range</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <Label>Price Range</Label>
-                <div className="pt-2 pb-4">
-                  <Slider
-                    min={1000000}
-                    max={50000000}
-                    step={500000}
-                    value={formData.budget}
-                    onValueChange={(value) => setFormData({ ...formData, budget: value })}
-                    className="w-full"
+          <motion.div key="budget" variants={stepVariants} initial="initial" animate="animate" exit="exit">
+            <Card className="border-primary/5 shadow-sm">
+              <CardHeader>
+                <CardTitle>What's your budget range?</CardTitle>
+                <CardDescription>This helps us show properties you can afford</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <Label>Price Range</Label>
+                  <div className="pt-6 pb-2">
+                    <Slider
+                      min={1000000}
+                      max={50000000}
+                      step={500000}
+                      value={formData.budget}
+                      onValueChange={(value) => setFormData({ ...formData, budget: value })}
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>₱{(formData.budget[0] / 1000000).toFixed(1)}M</span>
+                    <span>₱{(formData.budget[1] / 1000000).toFixed(1)}M</span>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="financing">Financing Status</Label>
+                  <Select
+                    value={formData.financing}
+                    onValueChange={(value) => setFormData({ ...formData, financing: value })}
+                  >
+                    <SelectTrigger id="financing">
+                      <SelectValue placeholder="Select financing status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pre-approved">Pre-approved</SelectItem>
+                      <SelectItem value="applying">Applying for loan</SelectItem>
+                      <SelectItem value="cash">Cash buyer</SelectItem>
+                      <SelectItem value="exploring">Still exploring options</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex justify-between">
+                  <Button variant="outline" onClick={handleBack}>
+                    Back
+                  </Button>
+                  <Button onClick={handleNext} disabled={!formData.financing}>
+                    Continue
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {step === 'location' && (
+          <motion.div key="location" variants={stepVariants} initial="initial" animate="animate" exit="exit">
+            <Card className="border-primary/5 shadow-sm">
+              <CardHeader>
+                <CardTitle>Where do you want to live?</CardTitle>
+                <CardDescription>We'll prioritize properties in these areas</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="location">Preferred Location</Label>
+                  <Input
+                    id="location"
+                    placeholder="e.g., Lahug, Banilad, Cebu City"
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                   />
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">₱{(formData.budget[0] / 1000000).toFixed(1)}M</div>
-                    <div className="text-xs text-muted-foreground">Minimum</div>
-                  </div>
-                  <div className="text-muted-foreground">—</div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">₱{(formData.budget[1] / 1000000).toFixed(1)}M</div>
-                    <div className="text-xs text-muted-foreground">Maximum</div>
-                  </div>
-                </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="financing">Financing Status</Label>
-                <Select
-                  value={formData.financing}
-                  onValueChange={(value) => setFormData({ ...formData, financing: value })}
-                >
-                  <SelectTrigger id="financing">
-                    <SelectValue placeholder="Select your financing status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pre-approved">✓ Pre-approved for financing</SelectItem>
-                    <SelectItem value="applying">📝 Currently applying for loan</SelectItem>
-                    <SelectItem value="cash">💰 Cash buyer</SelectItem>
-                    <SelectItem value="exploring">🔍 Still exploring options</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="ghost" onClick={handleBack}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-              <Button onClick={handleNext} disabled={!formData.financing}>
-                Continue
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </CardFooter>
-          </Card>
-        )}
-
-        {/* Step 3: Location & Property Type */}
-        {step === 'location' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Where and what type of property?</CardTitle>
-              <CardDescription>We'll prioritize listings in your preferred areas</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="location">Preferred Location</Label>
-                <Input
-                  id="location"
-                  placeholder="e.g., Lahug, Banilad, IT Park, Mandaue"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                />
-                <p className="text-xs text-muted-foreground">You can enter multiple areas separated by commas</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="propertyType">Property Type</Label>
-                <Select
-                  value={formData.propertyType}
-                  onValueChange={(value) => setFormData({ ...formData, propertyType: value })}
-                >
-                  <SelectTrigger id="propertyType">
-                    <SelectValue placeholder="What type of property are you looking for?" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="house">🏠 House and Lot</SelectItem>
-                    <SelectItem value="townhouse">🏘️ Townhouse</SelectItem>
-                    <SelectItem value="condo">🏢 Condominium</SelectItem>
-                    <SelectItem value="lot">📐 Lot Only</SelectItem>
-                    <SelectItem value="any">✨ Open to any type</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="ghost" onClick={handleBack}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-              <Button onClick={handleNext} disabled={!formData.location || !formData.propertyType}>
-                Continue
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </CardFooter>
-          </Card>
-        )}
-
-        {/* Step 4: Timeline */}
-        {step === 'timeline' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>When are you looking to close?</CardTitle>
-              <CardDescription>This helps us understand your urgency level</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <RadioGroup
-                value={formData.timeline}
-                onValueChange={(value) => setFormData({ ...formData, timeline: value })}
-                className="space-y-3"
-              >
-                {[
-                  { value: 'asap', label: 'ASAP (Within 30 days)', desc: 'Ready to close immediately' },
-                  { value: '1-3months', label: '1-3 months', desc: 'Actively searching and comparing' },
-                  { value: '3-6months', label: '3-6 months', desc: 'Planning ahead' },
-                  { value: 'exploring', label: 'Just exploring', desc: 'Researching options and market' },
-                ].map((option) => (
-                  <Label
-                    key={option.value}
-                    htmlFor={option.value}
-                    className={`flex items-start space-x-3 border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                      formData.timeline === option.value
-                        ? 'border-primary bg-accent'
-                        : 'border-border hover:border-primary/50'
-                    }`}
+                <div>
+                  <Label htmlFor="propertyType">Property Type</Label>
+                  <Select
+                    value={formData.propertyType}
+                    onValueChange={(value) => setFormData({ ...formData, propertyType: value })}
                   >
-                    <RadioGroupItem value={option.value} id={option.value} className="mt-0.5" />
-                    <div className="flex-1">
-                      <div className="font-semibold">{option.label}</div>
-                      <div className="text-sm text-muted-foreground">{option.desc}</div>
-                    </div>
-                  </Label>
-                ))}
-              </RadioGroup>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="ghost" onClick={handleBack}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-              <Button onClick={handleNext} disabled={!formData.timeline}>
-                Continue
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </CardFooter>
-          </Card>
+                    <SelectTrigger id="propertyType">
+                      <SelectValue placeholder="Select property type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="house">House and Lot</SelectItem>
+                      <SelectItem value="townhouse">Townhouse</SelectItem>
+                      <SelectItem value="condo">Condominium</SelectItem>
+                      <SelectItem value="lot">Lot Only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex justify-between">
+                  <Button variant="outline" onClick={handleBack}>
+                    Back
+                  </Button>
+                  <Button onClick={handleNext} disabled={!formData.location || !formData.propertyType}>
+                    Continue
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         )}
 
-        {/* Step 5: Preferences */}
-        {step === 'preferences' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Final preferences</CardTitle>
-              <CardDescription>Help us narrow down the perfect match</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="bedrooms">Number of Bedrooms</Label>
-                <Select
-                  value={formData.bedrooms}
-                  onValueChange={(value) => setFormData({ ...formData, bedrooms: value })}
+        {step === 'timeline' && (
+          <motion.div key="timeline" variants={stepVariants} initial="initial" animate="animate" exit="exit">
+            <Card className="border-primary/5 shadow-sm">
+              <CardHeader>
+                <CardTitle>When are you looking to close?</CardTitle>
+                <CardDescription>This helps us prioritize your search</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <RadioGroup
+                  value={formData.timeline}
+                  onValueChange={(value) => setFormData({ ...formData, timeline: value })}
                 >
-                  <SelectTrigger id="bedrooms">
-                    <SelectValue placeholder="Select number of bedrooms" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 bedroom</SelectItem>
-                    <SelectItem value="2">2 bedrooms</SelectItem>
-                    <SelectItem value="3">3 bedrooms</SelectItem>
-                    <SelectItem value="4">4 bedrooms</SelectItem>
-                    <SelectItem value="5+">5+ bedrooms</SelectItem>
-                    <SelectItem value="any">Flexible</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="ghost" onClick={handleBack}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-              <Button onClick={handleNext} disabled={!formData.bedrooms}>
-                Finish
-                <CheckCircle className="h-4 w-4 ml-2" />
-              </Button>
-            </CardFooter>
-          </Card>
+                  {['asap', '1-3months', '3-6months', 'exploring'].map((val) => (
+                    <motion.div key={val} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className={`flex items-center space-x-2 border rounded-lg p-4 transition-colors ${formData.timeline === val ? 'border-primary bg-primary/5' : 'hover:bg-accent'}`}>
+                      <RadioGroupItem value={val} id={val} />
+                      <Label htmlFor={val} className="flex-1 cursor-pointer">
+                        <div className="font-semibold">
+                          {val === 'asap' ? 'ASAP (Within 30 days)' : 
+                           val === '1-3months' ? '1-3 months' : 
+                           val === '3-6months' ? '3-6 months' : 'Just exploring'}
+                        </div>
+                      </Label>
+                    </motion.div>
+                  ))}
+                </RadioGroup>
+
+                <div className="flex justify-between">
+                  <Button variant="outline" onClick={handleBack}>
+                    Back
+                  </Button>
+                  <Button onClick={handleNext} disabled={!formData.timeline}>
+                    Continue
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         )}
 
-        {/* Step 6: Complete */}
+        {step === 'preferences' && (
+          <motion.div key="preferences" variants={stepVariants} initial="initial" animate="animate" exit="exit">
+            <Card className="border-primary/5 shadow-sm">
+              <CardHeader>
+                <CardTitle>Property preferences</CardTitle>
+                <CardDescription>Final details to refine your search</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="bedrooms">Number of Bedrooms</Label>
+                  <Select
+                    value={formData.bedrooms}
+                    onValueChange={(value) => setFormData({ ...formData, bedrooms: value })}
+                  >
+                    <SelectTrigger id="bedrooms">
+                      <SelectValue placeholder="Select bedrooms" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 bedroom</SelectItem>
+                      <SelectItem value="2">2 bedrooms</SelectItem>
+                      <SelectItem value="3">3 bedrooms</SelectItem>
+                      <SelectItem value="4+">4+ bedrooms</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex justify-between">
+                  <Button variant="outline" onClick={handleBack}>
+                    Back
+                  </Button>
+                  <Button onClick={handleNext} disabled={!formData.bedrooms}>
+                    Finish
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         {step === 'complete' && (
-          <Card>
-            <CardContent className="pt-12 pb-12 text-center space-y-6">
-              <div className="flex justify-center">
-                <div className="rounded-full bg-green-500/10 p-4">
-                  <CheckCircle className="h-16 w-16 text-green-500" />
+          <motion.div key="complete" variants={stepVariants} initial="initial" animate="animate">
+            <Card className="border-success/20 shadow-lg bg-gradient-to-br from-card to-success/5">
+              <CardContent className="pt-6">
+                <div className="text-center space-y-4">
+                  <motion.div
+                    variants={successScaleVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <CheckCircle className="h-16 w-16 text-success mx-auto" />
+                  </motion.div>
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2, ease: PREMIUM_EASE }}
+                  >
+                    <h2 className="text-2xl font-bold text-foreground">You're all set!</h2>
+                    <p className="text-muted-foreground">
+                      Based on your preferences, we've found properties that match your criteria.
+                      MAIya will also help you throughout your journey.
+                    </p>
+                  </motion.div>
+                  <div className="pt-4 space-y-2">
+                    <Button className="w-full bg-primary hover:bg-primary/90" size="lg" onClick={() => window.location.href = '/listings'}>
+                      Browse Matching Properties
+                    </Button>
+                    <Button variant="outline" className="w-full border-primary/20 text-primary hover:bg-primary/5" onClick={() => window.location.href = '/chat'}>
+                      Talk to MAIya
+                    </Button>
+                  </div>
                 </div>
-              </div>
-              <div>
-                <h2 className="text-3xl font-bold mb-2">You're all set!</h2>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  Based on your preferences, we've tailored your experience. MAIya is ready to help you find your perfect property.
-                </p>
-              </div>
-              
-              <div className="bg-muted rounded-lg p-4 max-w-md mx-auto text-left space-y-2 text-sm">
-                <div className="font-semibold">Your Profile:</div>
-                <div className="space-y-1 text-muted-foreground">
-                  <div>• {formData.userType === 'buyer' ? 'Buyer' : 'Seller'}</div>
-                  <div>• Budget: ₱{(formData.budget[0] / 1000000).toFixed(1)}M - ₱{(formData.budget[1] / 1000000).toFixed(1)}M</div>
-                  <div>• Location: {formData.location}</div>
-                  <div>• Timeline: {formData.timeline}</div>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-3 max-w-md mx-auto pt-4">
-                <Button size="lg" className="w-full" onClick={() => window.location.href = '/listings'}>
-                  Browse Matching Properties
-                </Button>
-                <Button size="lg" variant="outline" className="w-full" onClick={() => window.location.href = '/chat'}>
-                  Talk to MAIya
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
         )}
+      </AnimatePresence>
       </div>
     </div>
   )
